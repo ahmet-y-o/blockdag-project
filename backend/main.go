@@ -1,0 +1,357 @@
+package main
+
+import (
+	"bufio"
+	"cardgame/battle"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+)
+
+// Color codes for terminal
+const (
+	ColorReset  = "\033[0m"
+	ColorRed    = "\033[31m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorBlue   = "\033[34m"
+	ColorPurple = "\033[35m"
+	ColorCyan   = "\033[36m"
+	ColorWhite  = "\033[37m"
+)
+
+// Create sample decks
+func createEgyptianDeck() []battle.Card {
+	return []battle.Card{
+		{ID: "eg001", Name: "Ra, the Sun God", Archetype: battle.ArchetypeEgyptian, Attack: 3000, Defense: 2500, Cost: 8, Effect: "When summoned, deal 1000 damage to opponent", EffectType: "damage"},
+		{ID: "eg002", Name: "Anubis, Guardian of the Dead", Archetype: battle.ArchetypeEgyptian, Attack: 2200, Defense: 2800, Cost: 6, Effect: "When a card is destroyed, gain 500 HP", EffectType: "heal"},
+		{ID: "eg003", Name: "Isis, Mother of Magic", Archetype: battle.ArchetypeEgyptian, Attack: 1800, Defense: 2000, Cost: 4, Effect: "Draw an additional card", EffectType: "draw"},
+		{ID: "eg004", Name: "Horus, the Avenger", Archetype: battle.ArchetypeEgyptian, Attack: 2500, Defense: 2000, Cost: 5, Effect: "Gain +500 attack for each Egyptian card", EffectType: "buff"},
+		{ID: "eg005", Name: "Thoth, God of Wisdom", Archetype: battle.ArchetypeEgyptian, Attack: 1500, Defense: 2200, Cost: 3, Effect: "Gain 1 extra mana", EffectType: "mana"},
+		{ID: "eg006", Name: "Bastet, Cat Goddess", Archetype: battle.ArchetypeEgyptian, Attack: 1600, Defense: 1400, Cost: 3, Effect: "", EffectType: ""},
+		{ID: "eg007", Name: "Set, God of Chaos", Archetype: battle.ArchetypeEgyptian, Attack: 2800, Defense: 2000, Cost: 7, Effect: "Destroy one enemy card", EffectType: "destroy"},
+		{ID: "eg008", Name: "Sobek, Crocodile God", Archetype: battle.ArchetypeEgyptian, Attack: 2000, Defense: 2400, Cost: 5, Effect: "", EffectType: ""},
+		{ID: "eg009", Name: "Nephthys, Lady of the House", Archetype: battle.ArchetypeEgyptian, Attack: 1700, Defense: 2100, Cost: 4, Effect: "Draw a card", EffectType: "draw"},
+		{ID: "eg010", Name: "Khepri, Scarab God", Archetype: battle.ArchetypeEgyptian, Attack: 1400, Defense: 1800, Cost: 3, Effect: "", EffectType: ""},
+		// Add some neutral cards
+		{ID: "n001", Name: "Ancient Warrior", Archetype: battle.ArchetypeNeutral, Attack: 1800, Defense: 1600, Cost: 3, Effect: "", EffectType: ""},
+		{ID: "n002", Name: "Mystic Shield", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 2500, Cost: 2, Effect: "Block one attack", EffectType: "shield"},
+		{ID: "n003", Name: "Power Crystal", Archetype: battle.ArchetypeNeutral, Attack: 1000, Defense: 1000, Cost: 2, Effect: "Gain 2 mana", EffectType: "mana"},
+		{ID: "n004", Name: "Healing Potion", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 0, Cost: 1, Effect: "Heal 1000 HP", EffectType: "heal"},
+		{ID: "n005", Name: "Lightning Bolt", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 0, Cost: 3, Effect: "Deal 1500 damage", EffectType: "damage"},
+	}
+}
+
+func createGreekDeck() []battle.Card {
+	return []battle.Card{
+		{ID: "gr001", Name: "Zeus, King of Olympus", Archetype: battle.ArchetypeGreek, Attack: 3200, Defense: 2400, Cost: 8, Effect: "Deal 500 damage to all enemy cards", EffectType: "damage"},
+		{ID: "gr002", Name: "Athena, Goddess of War", Archetype: battle.ArchetypeGreek, Attack: 2400, Defense: 2600, Cost: 6, Effect: "All Greek cards gain +200 defense", EffectType: "buff"},
+		{ID: "gr003", Name: "Poseidon, Lord of the Seas", Archetype: battle.ArchetypeGreek, Attack: 2800, Defense: 2200, Cost: 7, Effect: "Return one enemy card to hand", EffectType: "bounce"},
+		{ID: "gr004", Name: "Apollo, God of Light", Archetype: battle.ArchetypeGreek, Attack: 2000, Defense: 2000, Cost: 4, Effect: "Heal 1000 HP", EffectType: "heal"},
+		{ID: "gr005", Name: "Hermes, the Messenger", Archetype: battle.ArchetypeGreek, Attack: 1600, Defense: 1800, Cost: 3, Effect: "Draw 2 cards", EffectType: "draw"},
+		{ID: "gr006", Name: "Artemis, the Hunter", Archetype: battle.ArchetypeGreek, Attack: 2100, Defense: 1700, Cost: 4, Effect: "", EffectType: ""},
+		{ID: "gr007", Name: "Ares, God of War", Archetype: battle.ArchetypeGreek, Attack: 2600, Defense: 1800, Cost: 6, Effect: "All cards gain +300 attack this turn", EffectType: "buff"},
+		{ID: "gr008", Name: "Hera, Queen of Gods", Archetype: battle.ArchetypeGreek, Attack: 2000, Defense: 2500, Cost: 5, Effect: "", EffectType: ""},
+		{ID: "gr009", Name: "Demeter, Goddess of Harvest", Archetype: battle.ArchetypeGreek, Attack: 1500, Defense: 2300, Cost: 4, Effect: "Gain 2 mana", EffectType: "mana"},
+		{ID: "gr010", Name: "Hephaestus, the Forger", Archetype: battle.ArchetypeGreek, Attack: 1900, Defense: 2100, Cost: 4, Effect: "", EffectType: ""},
+		// Add some neutral cards
+		{ID: "n001", Name: "Ancient Warrior", Archetype: battle.ArchetypeNeutral, Attack: 1800, Defense: 1600, Cost: 3, Effect: "", EffectType: ""},
+		{ID: "n002", Name: "Mystic Shield", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 2500, Cost: 2, Effect: "Block one attack", EffectType: "shield"},
+		{ID: "n003", Name: "Power Crystal", Archetype: battle.ArchetypeNeutral, Attack: 1000, Defense: 1000, Cost: 2, Effect: "Gain 2 mana", EffectType: "mana"},
+		{ID: "n004", Name: "Healing Potion", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 0, Cost: 1, Effect: "Heal 1000 HP", EffectType: "heal"},
+		{ID: "n005", Name: "Lightning Bolt", Archetype: battle.ArchetypeNeutral, Attack: 0, Defense: 0, Cost: 3, Effect: "Deal 1500 damage", EffectType: "damage"},
+	}
+}
+
+// Display functions
+func clearScreen() {
+	fmt.Print("\033[H\033[2J")
+}
+
+func displayGameState(game *battle.GameState, currentPlayerID string) {
+	clearScreen()
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Println(ColorCyan + "         CARD BATTLE GAME           " + ColorReset)
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Printf("Turn: %d | Phase: %s\n", game.TurnCount, game.Phase)
+	fmt.Printf("Current Player: %s%s%s\n\n", ColorYellow, game.CurrentTurn, ColorReset)
+
+	// Display Player 2 (Opponent)
+	opponent := game.Player2
+	if currentPlayerID == "Player 2" {
+		opponent = game.Player1
+	}
+
+	fmt.Printf("%s=== %s (Opponent) ===%s\n", ColorRed, opponent.ID, ColorReset)
+	fmt.Printf("HP: %s%d%s | Mana: %d/%d\n", ColorRed, opponent.HP, ColorReset, opponent.Mana, opponent.MaxMana)
+	fmt.Printf("Hand: %d cards | Deck: %d cards\n", len(opponent.Hand), len(opponent.Deck))
+	fmt.Println("\nField:")
+	if len(opponent.Field) == 0 {
+		fmt.Println("  (empty)")
+	} else {
+		for i, card := range opponent.Field {
+			fmt.Printf("  [%d] %s (%s) - ATK: %d / DEF: %d\n", i, card.Name, card.Archetype, card.Attack, card.Defense)
+		}
+	}
+
+	fmt.Println("\n" + ColorWhite + "-------------------------------------" + ColorReset)
+
+	// Display Current Player
+	player := game.Player1
+	if currentPlayerID == "Player 2" {
+		player = game.Player2
+	}
+
+	fmt.Printf("\n%s=== %s (You) ===%s\n", ColorGreen, player.ID, ColorReset)
+	fmt.Printf("HP: %s%d%s | Mana: %d/%d\n", ColorGreen, player.HP, ColorReset, player.Mana, player.MaxMana)
+	fmt.Printf("Deck: %d cards\n", len(player.Deck))
+
+	fmt.Println("\nYour Field:")
+	if len(player.Field) == 0 {
+		fmt.Println("  (empty)")
+	} else {
+		for i, card := range player.Field {
+			color := ColorWhite
+			if card.Archetype == battle.ArchetypeEgyptian {
+				color = ColorYellow
+			} else if card.Archetype == battle.ArchetypeGreek {
+				color = ColorBlue
+			}
+			fmt.Printf("  [%d] %s%s%s (%s) - ATK: %d / DEF: %d\n", i, color, card.Name, ColorReset, card.Archetype, card.Attack, card.Defense)
+		}
+	}
+
+	fmt.Println("\nYour Hand:")
+	for i, card := range player.Hand {
+		color := ColorWhite
+		if card.Archetype == battle.ArchetypeEgyptian {
+			color = ColorYellow
+		} else if card.Archetype == battle.ArchetypeGreek {
+			color = ColorBlue
+		}
+		effectStr := ""
+		if card.Effect != "" {
+			effectStr = fmt.Sprintf(" - %s", card.Effect)
+		}
+		fmt.Printf("  [%d] %s%s%s (Cost: %d) - ATK: %d / DEF: %d%s\n",
+			i, color, card.Name, ColorReset, card.Cost, card.Attack, card.Defense, effectStr)
+	}
+
+	if game.LastAction != "" {
+		fmt.Printf("\n%sLast Action: %s%s\n", ColorPurple, game.LastAction, ColorReset)
+	}
+
+	fmt.Println("\n" + ColorCyan + "=====================================" + ColorReset)
+}
+
+func displayCommands(phase battle.GamePhase) {
+	fmt.Println("\nAvailable Commands:")
+
+	switch phase {
+	case battle.PhaseDrawn:
+		fmt.Println("  draw     - Draw a card")
+		fmt.Println("  help     - Show this help")
+
+	case battle.PhaseMain:
+		fmt.Println("  play [n] - Play card number n from hand")
+		fmt.Println("  battle   - Enter battle phase")
+		fmt.Println("  end      - End your turn")
+		fmt.Println("  help     - Show this help")
+
+	case battle.PhaseBattle:
+		fmt.Println("  attack [attacker] [target] - Attack with your card")
+		fmt.Println("                              (use -1 as target for direct attack)")
+		fmt.Println("  main     - Return to main phase")
+		fmt.Println("  end      - End your turn")
+		fmt.Println("  help     - Show this help")
+
+	case battle.PhaseEnd:
+		fmt.Println("  end      - End your turn")
+		fmt.Println("  help     - Show this help")
+	}
+}
+
+func main() {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Welcome screen
+	clearScreen()
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Println(ColorCyan + "    WELCOME TO CARD BATTLE GAME     " + ColorReset)
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Println("\nChoose your deck:")
+	fmt.Println("1. Egyptian Gods Deck")
+	fmt.Println("2. Greek Gods Deck")
+
+	// Player 1 deck selection
+	fmt.Print("\nPlayer 1, choose your deck (1 or 2): ")
+	choice1, _ := reader.ReadString('\n')
+	choice1 = strings.TrimSpace(choice1)
+
+	deck1 := createEgyptianDeck()
+	if choice1 == "2" {
+		deck1 = createGreekDeck()
+		fmt.Println("Player 1 chose Greek Gods!")
+	} else {
+		fmt.Println("Player 1 chose Egyptian Gods!")
+	}
+
+	// Player 2 deck selection
+	fmt.Print("\nPlayer 2, choose your deck (1 or 2): ")
+	choice2, _ := reader.ReadString('\n')
+	choice2 = strings.TrimSpace(choice2)
+
+	deck2 := createEgyptianDeck()
+	if choice2 == "2" {
+		deck2 = createGreekDeck()
+		fmt.Println("Player 2 chose Greek Gods!")
+	} else {
+		fmt.Println("Player 2 chose Egyptian Gods!")
+	}
+
+	fmt.Print("\nPress Enter to start the game...")
+	reader.ReadString('\n')
+
+	// Create game
+	engine := battle.NewBattleEngine()
+	game, err := engine.CreateMatch("Player 1", "Player 2", deck1, deck2)
+	if err != nil {
+		fmt.Printf("Error creating match: %v\n", err)
+		return
+	}
+
+	// Game loop
+	for !game.GameOver {
+		// Get current game state
+		game, _ = engine.GetGameState(game.ID)
+		currentPlayer := game.CurrentTurn
+
+		// Display game state
+		displayGameState(game, currentPlayer)
+		displayCommands(game.Phase)
+
+		// Get player input
+		fmt.Printf("\n%s > ", currentPlayer)
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		// Parse command
+		parts := strings.Split(input, " ")
+		command := parts[0]
+
+		switch command {
+		case "draw":
+			if game.Phase == battle.PhaseDrawn {
+				err = engine.DrawCard(game.ID, currentPlayer)
+				if err != nil {
+					fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+					fmt.Print("Press Enter to continue...")
+					reader.ReadString('\n')
+				}
+			} else {
+				fmt.Printf("%sYou can only draw during the draw phase!%s\n", ColorRed, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "play":
+			if len(parts) < 2 {
+				fmt.Printf("%sUsage: play [card number]%s\n", ColorRed, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+				continue
+			}
+
+			cardIndex, err := strconv.Atoi(parts[1])
+			if err != nil {
+				fmt.Printf("%sInvalid card number!%s\n", ColorRed, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+				continue
+			}
+
+			err = engine.PlayCard(game.ID, currentPlayer, cardIndex)
+			if err != nil {
+				fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "attack":
+			if len(parts) < 3 {
+				fmt.Printf("%sUsage: attack [attacker index] [target index]%s\n", ColorRed, ColorReset)
+				fmt.Printf("%sUse -1 as target for direct attack%s\n", ColorRed, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+				continue
+			}
+
+			attackerIndex, err1 := strconv.Atoi(parts[1])
+			targetIndex, err2 := strconv.Atoi(parts[2])
+
+			if err1 != nil || err2 != nil {
+				fmt.Printf("%sInvalid indices!%s\n", ColorRed, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+				continue
+			}
+
+			err = engine.Attack(game.ID, currentPlayer, attackerIndex, targetIndex)
+			if err != nil {
+				fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "battle":
+			err = engine.ChangePhase(game.ID, currentPlayer, battle.PhaseBattle)
+			if err != nil {
+				fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "main":
+			err = engine.ChangePhase(game.ID, currentPlayer, battle.PhaseMain)
+			if err != nil {
+				fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "end":
+			err = engine.EndTurn(game.ID, currentPlayer)
+			if err != nil {
+				fmt.Printf("%sError: %v%s\n", ColorRed, err, ColorReset)
+				fmt.Print("Press Enter to continue...")
+				reader.ReadString('\n')
+			}
+
+		case "help":
+			displayCommands(game.Phase)
+			fmt.Print("Press Enter to continue...")
+			reader.ReadString('\n')
+
+		case "quit":
+			fmt.Println("Thanks for playing!")
+			return
+
+		default:
+			fmt.Printf("%sUnknown command. Type 'help' for available commands.%s\n", ColorRed, ColorReset)
+			fmt.Print("Press Enter to continue...")
+			reader.ReadString('\n')
+		}
+	}
+
+	// Game Over
+	clearScreen()
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Println(ColorCyan + "           GAME OVER!              " + ColorReset)
+	fmt.Println(ColorCyan + "=====================================" + ColorReset)
+	fmt.Printf("\n%sWinner: %s!%s\n", ColorYellow, game.Winner, ColorReset)
+	fmt.Println("\nFinal Stats:")
+	fmt.Printf("Player 1 HP: %d\n", game.Player1.HP)
+	fmt.Printf("Player 2 HP: %d\n", game.Player2.HP)
+	fmt.Println("\nThanks for playing!")
+}
