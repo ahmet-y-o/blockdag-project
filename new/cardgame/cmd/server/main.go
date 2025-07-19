@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cardgame/client"
+	"cardgame/server"
 	"flag"
 	"fmt"
 	"log"
@@ -9,27 +9,16 @@ import (
 
 func main() {
 	// Parse command line flags
-	serverAddr := flag.String("server", "localhost:8080", "Server address")
-	playerName := flag.String("name", "", "Player name")
+	port := flag.String("port", "8080", "Server port")
 	flag.Parse()
 
-	// Create client
-	gameClient := client.NewGameClient(*serverAddr)
+	// Create and start server
+	gameServer := server.NewGameServer(*port)
 
-	// Set player name if provided
-	if *playerName != "" {
-		gameClient.SetPlayerName(*playerName)
-	}
+	fmt.Printf("🎮 Card Battle Game Server starting on port %s...\n", *port)
+	fmt.Println("Players can connect using: go run cmd/client/main.go -server localhost:" + *port)
 
-	// Connect to server
-	fmt.Printf("🎮 Connecting to Card Battle Game server at %s...\n", *serverAddr)
-
-	if err := gameClient.Connect(); err != nil {
-		log.Fatal("Failed to connect:", err)
-	}
-
-	// Run the client
-	if err := gameClient.Run(); err != nil {
-		log.Fatal("Client error:", err)
+	if err := gameServer.Start(); err != nil {
+		log.Fatal("Server error:", err)
 	}
 }
